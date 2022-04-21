@@ -1,0 +1,15 @@
+p {
+  font-size: 10rem;
+  font-weight: 700;
+}
+
+#container {
+  z-index: -1;
+  width: 100vw;
+  height: 100vh;
+  position: fixed;
+  top: 0;
+  left: 0;
+}
+
+/*# sourceMappingURL=index.d6fe4c92.css.map */
