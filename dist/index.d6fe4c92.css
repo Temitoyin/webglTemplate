@@ -7,9 +7,14 @@ p {
   z-index: -1;
   width: 100vw;
   height: 100vh;
+  background-color: #fff;
   position: fixed;
   top: 0;
   left: 0;
+}
+
+canvas {
+  background-color: #fff;
 }
 
 /*# sourceMappingURL=index.d6fe4c92.css.map */

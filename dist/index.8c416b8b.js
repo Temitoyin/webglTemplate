@@ -517,11 +517,16 @@ function hmrAcceptRun(bundle, id) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 var _three = require("three");
+var _fragmentGlsl = require("../shaders/fragment.glsl");
+var _fragmentGlslDefault = parcelHelpers.interopDefault(_fragmentGlsl);
+var _vertexGlsl = require("../shaders/vertex.glsl");
+var _vertexGlslDefault = parcelHelpers.interopDefault(_vertexGlsl);
 var _orbitControls = require("three/examples/jsm/controls/OrbitControls");
 class Sketch {
     constructor(options){
         this.time = 0;
         this.container = options.dom;
+        this.uniforms;
         this.width = this.container.offsetWidth;
         this.height = this.container.offsetHeight;
         this.scene = new _three.Scene();
@@ -533,10 +538,26 @@ class Sketch {
         this.renderer.setSize(this.width, this.height);
         this.container.appendChild(this.renderer.domElement);
         this.controls = new _orbitControls.OrbitControls(this.camera, this.renderer.domElement);
+        this.raycaster = new _three.Raycaster();
+        this.mouse = new _three.Vector2();
+        this.mouseMovement();
         this.resize();
         this.setupResize();
         this.addObjects();
         this.render();
+    }
+    mouseMovement() {
+        window.addEventListener("mousemove", (event)=>{
+            this.mouse.x = event.clientX / window.innerWidth * 2 - 1;
+            this.mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+            this.raycaster.setFromCamera(this.mouse, this.camera);
+            const intersects = this.raycaster.intersectObjects(this.scene.children);
+            if (intersects.length > 0) {
+                //   console.log(intersects[0]);
+                let obj = intersects[0].object;
+                obj.material.uniforms.hover.value = intersects[0].uv;
+            }
+        }, false);
     }
     setupResize() {
         window.addEventListener("resize", this.resize.bind(this));
@@ -549,27 +570,31 @@ class Sketch {
         this.camera.updateProjectionMatrix();
     }
     addObjects() {
-        this.geometry = new _three.BoxGeometry(0.2, 0.2, 0.2);
+        this.geometry = new _three.PlaneBufferGeometry(0.5, 0.5, 10, 10);
         this.material = new _three.MeshNormalMaterial();
         this.material = new _three.ShaderMaterial({
-            fragmentShader: `
-        void main() {
-	        gl_FragColor = vec4(1.0,0.0,1.0,1.0);
-            }
-        `,
-            vertexShader: `
-        void main() {
-	        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-            }
-        `
+            uniforms: {
+                time: {
+                    value: 0
+                },
+                u_resolution: {
+                    value: new _three.Vector2(this.width / 1.5, this.height / 1.5)
+                },
+                hover: {
+                    value: new _three.Vector2(0.5, 0.5)
+                }
+            },
+            side: _three.DoubleSide,
+            fragmentShader: _fragmentGlslDefault.default,
+            vertexShader: _vertexGlslDefault.default,
+            wireframe: false
         });
         this.mesh = new _three.Mesh(this.geometry, this.material);
         this.scene.add(this.mesh);
     }
     render() {
         this.time += 0.5;
-        this.mesh.rotation.x = this.time / 2000;
-        this.mesh.rotation.y = this.time / 1000;
+        this.material.uniforms.time.value = this.time;
         this.renderer.render(this.scene, this.camera);
         window.requestAnimationFrame(this.render.bind(this));
     }
@@ -579,7 +604,7 @@ new Sketch({
     dom: document.getElementById("container")
 });
 
-},{"three":"ktPTu","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3","three/examples/jsm/controls/OrbitControls":"7mqRv"}],"ktPTu":[function(require,module,exports) {
+},{"three":"ktPTu","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3","three/examples/jsm/controls/OrbitControls":"7mqRv","../shaders/fragment.glsl":"9KZMf","../shaders/vertex.glsl":"2wALC"}],"ktPTu":[function(require,module,exports) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "ACESFilmicToneMapping", ()=>ACESFilmicToneMapping
@@ -31067,6 +31092,12 @@ class MapControls extends OrbitControls {
     }
 }
 
-},{"three":"ktPTu","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}]},["dEA8u","3nyMa"], "3nyMa", "parcelRequire94c2")
+},{"three":"ktPTu","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"9KZMf":[function(require,module,exports) {
+module.exports = "//color\nuniform vec2 u_hover;\n// uniform vec2 u_resolution;\n\n// uniform float time;\n// varying float vNoise;\n// vec3 yellow, magenta, green;\n// vec3 colorA = vec3(0.149,0.141,0.912);\n// vec3 colorB = vec3(1.000,0.833,0.224);\n\n// void main() {\n//         vec2 st = gl_FragCoord.xy/(u_resolution.xy);\n//         vec3 color = vec3(0.0);\n\n//     // float pct = abs(sin(time/20.));\n//         vec3 pct = vec3(st.x);\n\n//     // float x = smoothstep(0.2,0.3, time);\n\n//     color = mix(colorA, colorB, pct);\n\n//     gl_FragColor = vec4(color, 1.0);\n// }\n\n// Color from the center\n// #define TWO_PI 6.28318530718\n\n// uniform vec2 u_resolution;\n// uniform float time;\n\n// //  Function from Iñigo Quiles\n// //  https://www.shadertoy.com/view/MsS3Wc\n// vec3 hsb2rgb( in vec3 c ){\n//     vec3 rgb = clamp(abs(mod(c.x*6.0+vec3(0.0,4.0,2.0),\n//                              6.0)-3.0)-1.0,\n//                      0.0,\n//                      1.0 );\n//     rgb = rgb*rgb*(3.0-2.0*rgb);\n//     return c.z * mix( vec3(1.0), rgb, c.y);\n// }\n\n// void main(){\n//     vec2 st = gl_FragCoord.xy/u_resolution;\n//     vec3 color = vec3(0.0);\n\n//     // Use polar coordinates instead of cartesian\n//     vec2 toCenter = vec2(0.5)-st;\n//     float angle = atan(toCenter.y,toCenter.x);\n//     float radius = length(toCenter)*2.0;\n\n//     // Map the angle (-PI to PI) to the Hue (from 0 to 1)\n//     // and the Saturation to the radius\n//     color = hsb2rgb(vec3((angle/TWO_PI)+0.5,radius,1.0));\n\n//     gl_FragColor = vec4(color,1.0);\n// }\n\n// Shapes\n\n#ifdef GL_ES\nprecision mediump float;\n#define GLSLIFY 1\n#endif\n\nuniform vec2 u_resolution;\nuniform vec2 u_mouse;\nuniform float u_time;\nvarying vec2 vUv; \n\nvoid main(){\nvec2 st = gl_FragCoord.xy/u_resolution.xy;\nvec2 newUV = vUv;\n    vec3 color = vec3(0.0);\n    float dist = distance(newUV, vec2(0.5));\n\n    vec2 pos = vec2(0.3)-dist;\n\n    float r = length(pos)*2.0;\n    float a = atan(pos.y,pos.x);\n\n    float f = cos(a*2.);\n    // f = abs(cos(a*3.));\n    // f = abs(cos(a*2.5))*.5+.3;\n    // f = abs(cos(a*12.)*sin(a*3.))*.8+.1;\n    // f = smoothstep(-.5,1., cos(a*10.))*0.2+0.5;\n\n    color = vec3( 1.-smoothstep(f,f+0.02,r) );\n\n    gl_FragColor = vec4(color, 1.0);\n  // Visualize the distance field\n//   gl_FragColor = vec4(vec3(fract(dist*10.0)),1.0);\n\n  // Drawing with the distance field\n  // gl_FragColor = vec4(vec3( step(.3,d) ),1.0);\n  // gl_FragColor = vec4(vec3( step(.3,d) * step(d,.4)),1.0);\n  // gl_FragColor = vec4(vec3( smoothstep(.3,.4,d)* smoothstep(.6,.5,d)) ,1.0);\n}\n";
+
+},{}],"2wALC":[function(require,module,exports) {
+module.exports = "#define GLSLIFY 1 \n// vec4 permute(vec4 x){return mod(((x*34.0)+1.0)*x, 289.0);}\n// vec4 taylorInvSqrt(vec4 r){return 1.79284291400159 - 0.85373472095314 * r;}\n// vec3 fade(vec3 t) {return t*t*t*(t*(t*6.0-15.0)+10.0);}\n\n// float cnoise(vec3 P){\n//   vec3 Pi0 = floor(P); // Integer part for indexing\n//   vec3 Pi1 = Pi0 + vec3(1.0); // Integer part + 1\n//   Pi0 = mod(Pi0, 289.0);\n//   Pi1 = mod(Pi1, 289.0);\n//   vec3 Pf0 = fract(P); // Fractional part for interpolation\n//   vec3 Pf1 = Pf0 - vec3(1.0); // Fractional part - 1.0\n//   vec4 ix = vec4(Pi0.x, Pi1.x, Pi0.x, Pi1.x);\n//   vec4 iy = vec4(Pi0.yy, Pi1.yy);\n//   vec4 iz0 = Pi0.zzzz;\n//   vec4 iz1 = Pi1.zzzz;\n\n//   vec4 ixy = permute(permute(ix) + iy);\n//   vec4 ixy0 = permute(ixy + iz0);\n//   vec4 ixy1 = permute(ixy + iz1);\n\n//   vec4 gx0 = ixy0 / 7.0;\n//   vec4 gy0 = fract(floor(gx0) / 7.0) - 0.5;\n//   gx0 = fract(gx0);\n//   vec4 gz0 = vec4(0.5) - abs(gx0) - abs(gy0);\n//   vec4 sz0 = step(gz0, vec4(0.0));\n//   gx0 -= sz0 * (step(0.0, gx0) - 0.5);\n//   gy0 -= sz0 * (step(0.0, gy0) - 0.5);\n\n//   vec4 gx1 = ixy1 / 7.0;\n//   vec4 gy1 = fract(floor(gx1) / 7.0) - 0.5;\n//   gx1 = fract(gx1);\n//   vec4 gz1 = vec4(0.5) - abs(gx1) - abs(gy1);\n//   vec4 sz1 = step(gz1, vec4(0.0));\n//   gx1 -= sz1 * (step(0.0, gx1) - 0.5);\n//   gy1 -= sz1 * (step(0.0, gy1) - 0.5);\n\n//   vec3 g000 = vec3(gx0.x,gy0.x,gz0.x);\n//   vec3 g100 = vec3(gx0.y,gy0.y,gz0.y);\n//   vec3 g010 = vec3(gx0.z,gy0.z,gz0.z);\n//   vec3 g110 = vec3(gx0.w,gy0.w,gz0.w);\n//   vec3 g001 = vec3(gx1.x,gy1.x,gz1.x);\n//   vec3 g101 = vec3(gx1.y,gy1.y,gz1.y);\n//   vec3 g011 = vec3(gx1.z,gy1.z,gz1.z);\n//   vec3 g111 = vec3(gx1.w,gy1.w,gz1.w);\n\n//   vec4 norm0 = taylorInvSqrt(vec4(dot(g000, g000), dot(g010, g010), dot(g100, g100), dot(g110, g110)));\n//   g000 *= norm0.x;\n//   g010 *= norm0.y;\n//   g100 *= norm0.z;\n//   g110 *= norm0.w;\n//   vec4 norm1 = taylorInvSqrt(vec4(dot(g001, g001), dot(g011, g011), dot(g101, g101), dot(g111, g111)));\n//   g001 *= norm1.x;\n//   g011 *= norm1.y;\n//   g101 *= norm1.z;\n//   g111 *= norm1.w;\n\n//   float n000 = dot(g000, Pf0);\n//   float n100 = dot(g100, vec3(Pf1.x, Pf0.yz));\n//   float n010 = dot(g010, vec3(Pf0.x, Pf1.y, Pf0.z));\n//   float n110 = dot(g110, vec3(Pf1.xy, Pf0.z));\n//   float n001 = dot(g001, vec3(Pf0.xy, Pf1.z));\n//   float n101 = dot(g101, vec3(Pf1.x, Pf0.y, Pf1.z));\n//   float n011 = dot(g011, vec3(Pf0.x, Pf1.yz));\n//   float n111 = dot(g111, Pf1);\n\n//   vec3 fade_xyz = fade(Pf0);\n//   vec4 n_z = mix(vec4(n000, n100, n010, n110), vec4(n001, n101, n011, n111), fade_xyz.z);\n//   vec2 n_yz = mix(n_z.xy, n_z.zw, fade_xyz.y);\n//   float n_xyz = mix(n_yz.x, n_yz.y, fade_xyz.x); \n//   return 2.2 * n_xyz;\n// }\n// varying float vNoise;\nuniform float time;\nvarying vec2 vUv;\n\nvoid main() {\n        vec3 newposition = position;\n        // newposition.z = 0.01*sin(newposition.x*10. +time/2.);\n        // newposition.x = 0.01*sin(newposition.z*10. +time/20.);\n\n        // float vNoise = cnoise(vec3(newposition.x, newposition.y + time,0.));\n vUv = uv;\n\tgl_Position = projectionMatrix * modelViewMatrix * vec4(newposition, 1.0);\n}";
+
+},{}]},["dEA8u","3nyMa"], "3nyMa", "parcelRequire94c2")
 
 //# sourceMappingURL=index.8c416b8b.js.map
