@@ -1,4 +1,7 @@
 p {
+  text-align: center;
+  margin: 0 auto;
+  font-family: Spirax, cursive;
   font-size: 10rem;
   font-weight: 700;
 }

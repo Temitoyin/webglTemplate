@@ -8,7 +8,11 @@ export default class Sketch {
   constructor(options) {
     this.time = 0;
     this.container = options.dom;
-    this.uniforms;
+    this.uniforms = {
+      time: { value: 0 },
+      u_resolution: { value: new THREE.Vector2() },
+      hover: { value: new THREE.Vector2(0.5, 0.5) },
+    };
     this.width = this.container.offsetWidth;
     this.height = this.container.offsetHeight;
     this.scene = new THREE.Scene();
@@ -25,7 +29,6 @@ export default class Sketch {
     this.controls = new OrbitControls(this.camera, this.renderer.domElement);
     this.raycaster = new THREE.Raycaster();
     this.mouse = new THREE.Vector2();
-
     this.mouseMovement();
     this.resize();
     this.setupResize();
@@ -52,6 +55,7 @@ export default class Sketch {
     );
   }
 
+ 
   setupResize() {
     window.addEventListener("resize", this.resize.bind(this));
   }
@@ -60,19 +64,17 @@ export default class Sketch {
     this.width = this.container.offsetWidth;
     this.height = this.container.offsetHeight;
     this.renderer.setSize(this.width, this.height);
+    this.uniforms.u_resolution.value.x = this.width;
+    this.uniforms.u_resolution.value.y = this.height;
     this.camera.aspect = this.width / this.height;
     this.camera.updateProjectionMatrix();
   }
 
   addObjects() {
-    this.geometry = new THREE.PlaneBufferGeometry(0.5, 0.5, 10, 10);
+    this.geometry = new THREE.PlaneBufferGeometry(2.5, 2.5, 10, 10);
     this.material = new THREE.MeshNormalMaterial();
     this.material = new THREE.ShaderMaterial({
-      uniforms: {
-        time: { value: 0 },
-        u_resolution: { value: new THREE.Vector2(this.width/1.5, this.height/1.5) },
-        hover: { value: new THREE.Vector2(0.5, 0.5) },
-      },
+      uniforms: this.uniforms,
       side: THREE.DoubleSide,
       fragmentShader: fragment,
       vertexShader: vertex,
