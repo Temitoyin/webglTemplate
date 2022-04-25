@@ -59,41 +59,183 @@ uniform vec2 u_hover;
 
 // Shapes
 
+// #ifdef GL_ES
+// precision mediump float;
+// #endif
+
+// uniform vec2 u_resolution;
+// uniform vec2 u_mouse;
+// uniform float u_time;
+// varying vec2 vUv; 
+
+
+// void main(){
+// vec2 st = gl_FragCoord.xy/u_resolution.xy;
+// vec2 newUV = vUv;
+//     vec3 color = vec3(0.0);
+//     float dist = distance(newUV, vec2(0.5));
+
+//     vec2 pos = vec2(0.3)-dist;
+
+//     float r = length(pos)*2.0;
+//     float a = atan(pos.y,pos.x);
+
+//     float f = cos(a*2.);
+//     // f = abs(cos(a*3.));
+//     // f = abs(cos(a*2.5))*.5+.3;
+//     // f = abs(cos(a*12.)*sin(a*3.))*.8+.1;
+//     // f = smoothstep(-.5,1., cos(a*10.))*0.2+0.5;
+
+//     color = vec3( 1.-smoothstep(f,f+0.02,r) );
+
+//     // gl_FragColor = vec4(color, 1.0);
+//   // Visualize the distance field
+// //   gl_FragColor = vec4(vec3(fract(dist*10.0)),1.0);
+
+//   // Drawing with the distance field
+//   // gl_FragColor = vec4(vec3( step(.3,d) ),1.0);
+//   // gl_FragColor = vec4(vec3( step(.3,d) * step(d,.4)),1.0);
+//   gl_FragColor = vec4(vec3( smoothstep(.3,.4,d)* smoothstep(.6,.5,d)) ,1.0);
+// }
+
+//Matrix
+// Author @patriciogv ( patriciogonzalezvivo.com ) - 2015
+
+// #ifdef GL_ES
+// precision mediump float;
+// #endif
+
+// uniform vec2 u_resolution;
+// uniform float time;
+
+// float box(in vec2 _st, in vec2 _size){
+//     _size = vec2(0.5) - _size*0.5;
+//     vec2 uv = smoothstep(_size,
+//                         _size+vec2(0.001),
+//                         _st);
+//     uv *= smoothstep(_size,
+//                     _size+vec2(0.001),
+//                     vec2(1.0)-_st);
+//     return uv.x*uv.y;
+// }
+
+// float cross(in vec2 _st, float _size){
+//     return  box(_st, vec2(_size,_size/4.)) +
+//             box(_st, vec2(_size/4.,_size));
+// }
+
+// void main(){
+//     vec2 st = gl_FragCoord.xy/u_resolution.xy;
+//     vec3 color = vec3(0.0);
+
+//     // To move the cross we move the space
+//     vec2 translate = vec2(cos(time/10.),exp(sin(time/10.)));
+//     st += translate*0.35;
+
+//     // Show the coordinates of the space on the background
+//     color = vec3(st.x,st.y,0.0);
+
+//     // Add the shape on the foreground
+//     color += vec3(cross(st,0.25));
+
+//     gl_FragColor = vec4(color,1.0);
+// }
+
+// Rotation
+// #ifdef GL_ES
+// precision mediump float;
+// #endif
+
+// #define PI 3.14159265359
+
+// uniform vec2 u_resolution;
+// uniform float time;
+
+// mat2 rotate2d(float _angle){
+//     return mat2(cos(_angle),-sin(_angle),
+//                 sin(_angle),cos(_angle));
+// }
+
+// float box(in vec2 _st, in vec2 _size){
+//     _size = vec2(0.5) - _size*0.5;
+//     vec2 uv = smoothstep(_size,
+//                         _size+vec2(0.001),
+//                         _st);
+//     uv *= smoothstep(_size,
+//                     _size+vec2(0.001),
+//                     vec2(1.0)-_st);
+//     return uv.x*uv.y;
+// }
+
+// float cross(in vec2 _st, float _size){
+//     return  box(_st, vec2(_size,_size/4.)) +
+//             box(_st, vec2(_size/4.,_size));
+// }
+
+// void main(){
+//     vec2 st = gl_FragCoord.xy/u_resolution.xy;
+//     vec3 color = vec3(0.0);
+
+//     // move space from the center to the vec2(0.0)
+//     st -= vec2(0.5);
+//     // rotate the space
+//     st = rotate2d( sin(time/13.)*PI ) * st;
+//     // move it back to the original place
+//     st += vec2(0.5);
+
+//     // Show the coordinates of the space on the background
+//     // color = vec3(st.x,st.y,0.0);
+
+//     // Add the shape on the foreground
+//     color += vec3(cross(st,0.4));
+
+//     gl_FragColor = vec4(color,1.0);
+// }
+
+// Scale 
 #ifdef GL_ES
 precision mediump float;
 #endif
 
-uniform vec2 u_resolution;
-uniform vec2 u_mouse;
-uniform float u_time;
-varying vec2 vUv; 
+#define PI 3.14159265359
 
+uniform vec2 u_resolution;
+uniform float time;
+
+mat2 scale(vec2 _scale){
+    return mat2(_scale.x,0.0,
+                0.0,_scale.y);
+}
+
+float box(in vec2 _st, in vec2 _size){
+    _size = vec2(0.5) - _size*0.5;
+    vec2 uv = smoothstep(_size,
+                        _size+vec2(0.001),
+                        _st);
+    uv *= smoothstep(_size,
+                    _size+vec2(0.001),
+                    vec2(1.0)-_st);
+    return uv.x*uv.y;
+}
+
+float cross(in vec2 _st, float _size){
+    return  box(_st, vec2(_size,_size/4.)) +
+            box(_st, vec2(_size/4.,_size));
+}
 
 void main(){
-vec2 st = gl_FragCoord.xy/u_resolution.xy;
-vec2 newUV = vUv;
+    vec2 st = gl_FragCoord.xy/u_resolution.xy;
     vec3 color = vec3(0.0);
-    float dist = distance(newUV, vec2(0.5));
 
-    vec2 pos = vec2(0.3)-dist;
+    st -= vec2(0.5);
+    st = scale( vec2(sin(time/10.)+1.0) ) * st;
+    st += vec2(0.5);
 
-    float r = length(pos)*2.0;
-    float a = atan(pos.y,pos.x);
+    // Show the coordinates of the space on the background
+    // color = vec3(st.x,st.y,0.0);
 
-    float f = cos(a*2.);
-    // f = abs(cos(a*3.));
-    // f = abs(cos(a*2.5))*.5+.3;
-    // f = abs(cos(a*12.)*sin(a*3.))*.8+.1;
-    // f = smoothstep(-.5,1., cos(a*10.))*0.2+0.5;
+    // Add the shape on the foreground
+    color += vec3(cross(st,0.2));
 
-    color = vec3( 1.-smoothstep(f,f+0.02,r) );
-
-    gl_FragColor = vec4(color, 1.0);
-  // Visualize the distance field
-//   gl_FragColor = vec4(vec3(fract(dist*10.0)),1.0);
-
-  // Drawing with the distance field
-  // gl_FragColor = vec4(vec3( step(.3,d) ),1.0);
-  // gl_FragColor = vec4(vec3( step(.3,d) * step(d,.4)),1.0);
-  // gl_FragColor = vec4(vec3( smoothstep(.3,.4,d)* smoothstep(.6,.5,d)) ,1.0);
+    gl_FragColor = vec4(color,1.0);
 }
